@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>World Tournament</title>
+<style>
+body{margin:0;background:#0e1012;color:#f2efe6;font-family:"Trebuchet MS",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+h1{margin:0 0 4px;font-size:1.6rem}
+p.sub{margin:0 0 20px;color:#9aa0a6;text-align:center}
+.cards{display:flex;flex-direction:column;gap:14px;width:100%;max-width:420px}
+a.card{display:block;text-decoration:none;color:#f2efe6;background:#1c2024;border:2px solid #3a3f45;border-radius:14px;padding:18px}
+a.card:active{border-color:#f5b800}
+a.card h2{margin:0 0 6px;font-size:1.25rem;color:#f5b800}
+a.card p{margin:0 0 4px;font-size:.9rem;color:#c9ccd0}
+a.card b{display:inline-block;margin-top:8px;background:#f5b800;color:#1b1d20;padding:10px 18px;border-radius:8px}
+.note{margin-top:18px;font-size:.78rem;color:#9aa0a6;text-align:center;max-width:36ch}
+
+#notice{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:20px;z-index:99}
+#notice .box{background:#1c2024;border:2px solid #f5b800;border-radius:14px;padding:22px;max-width:380px;width:100%;text-align:center}
+#notice h2{margin:0 0 10px;color:#f5b800;font-size:1.25rem}
+#notice p{margin:0 0 10px;font-size:.92rem;line-height:1.45;color:#e6e3da}
+#notice button{font:inherit;font-weight:700;background:#f5b800;color:#1b1d20;border:0;border-radius:8px;padding:12px 26px;margin-top:6px;cursor:pointer}
+</style></head><body>
+<h1>World Tournament</h1><p class="sub">Choose a game to play</p>
+<div class="cards">
+<a class="card" href="/race"><h2>Racing game</h2><p>Same track, same speed. Skill decides.</p><p>1 vs 1, 5-player and 2 vs 2 team tournaments.</p><p>Tournaments from ₦100 · Prize 1.8x</p><b>Play racing game</b></a>
+<a class="card" href="/shoot"><h2>Shooting game</h2><p>Armored tanks, 3 maps, best of 3 rounds.</p><p>1 vs 1, 5-player and 2 vs 2 team tournaments, with voice chat.</p><p>Tournament ₦500 · Prize ₦900. 5-player ₦1,000 · Prize up to ₦2,200.</p><b>Play shooting game</b></a>
+</div>
+<p class="note">Play money only. No payments in this version.</p>
+<div id="notice"><div class="box"><h2>Important notice</h2>
+<p>World Tournament is a skill-based gaming experience. Results are decided by player skill, not by luck or chance.</p>
+<p>It is not a lottery, betting or gambling game. This version uses play money only.</p>
+<p>You must be 18 or older to play.</p>
+<button id="nok">I understand</button></div></div>
+<script>
+(function(){var k='wt_notice',seen='';try{seen=sessionStorage.getItem(k)}catch(e){}
+var el=document.getElementById('notice');if(seen){el.style.display='none';return}
+document.getElementById('nok').onclick=function(){try{sessionStorage.setItem(k,'1')}catch(e){}el.style.display='none'}})();
+</script>
+</body></html>
