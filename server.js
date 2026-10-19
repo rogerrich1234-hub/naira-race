@@ -3,6 +3,7 @@ const {WebSocketServer}=require('ws');
 const S=require('./shared.js');
 const server=http.createServer((req,res)=>{
   const isJs=req.url==='/shared.js';
+  if(require('./api.js')(req,res))return;
   if(req.url==='/'||req.url==='/lobby'){res.writeHead(200,{'Content-Type':'text/html'});return res.end(fs.readFileSync(path.join(__dirname,'lobby.html')))}
   if(req.url==='/race'){res.writeHead(200,{'Content-Type':'text/html'});return res.end(fs.readFileSync(path.join(__dirname,'index.html')))}
   if(req.url==='/shoot'){res.writeHead(200,{'Content-Type':'text/html'});return res.end(fs.readFileSync(path.join(__dirname,'shooter.html')))}
@@ -190,5 +191,6 @@ function finish(r){
   r.ws.forEach(w=>send(w,{type:'end',rank,left,team:!!r.team,winTeam:r.team?(rank[0]>>1):0}));
 }
 require('./shooter.js')(wss);
+require('./db.js').init().then(ok=>console.log(ok?'Database ready':'No database (accounts off)')).catch(e=>console.log('Database error: '+e.message));
 const PORT=process.env.PORT||3000;
 server.listen(PORT,()=>console.log('Naira Race running on port '+PORT));

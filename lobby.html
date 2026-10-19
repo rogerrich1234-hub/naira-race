@@ -3,7 +3,17 @@
 <style>
 body{margin:0;background:#0e1012;color:#f2efe6;font-family:"Trebuchet MS",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
 h1{margin:0 0 4px;font-size:1.6rem}
-p.sub{margin:0 0 20px;color:#9aa0a6;text-align:center}
+p.sub{margin:0 0 16px;color:#9aa0a6;text-align:center}
+.panel{width:100%;max-width:420px;box-sizing:border-box;background:#1c2024;border:1px solid #3a3f45;border-radius:14px;padding:16px;margin-bottom:14px}
+.panel h2{margin:0 0 10px;font-size:1.05rem;color:#f5b800}
+.panel input{font:inherit;width:100%;box-sizing:border-box;padding:12px;margin-bottom:8px;border-radius:8px;border:1px solid #3a3f45;background:#14171a;color:#f2efe6}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-weight:700;background:#f5b800;color:#1b1d20;border:0;border-radius:8px;padding:11px 18px;cursor:pointer}
+button.alt{background:#3a3f45;color:#f2efe6}
+#am{color:#ff8a8a;font-size:.85rem;min-height:1em;margin-top:8px}
+.who{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.tiny,small{color:#9aa0a6;font-size:.78rem}
+#hist div{font-size:.82rem;color:#c9ccd0;padding:4px 0;border-top:1px solid #2a2f35}
 .cards{display:flex;flex-direction:column;gap:14px;width:100%;max-width:420px}
 a.card{display:block;text-decoration:none;color:#f2efe6;background:#1c2024;border:2px solid #3a3f45;border-radius:14px;padding:18px}
 a.card:active{border-color:#f5b800}
@@ -11,27 +21,75 @@ a.card h2{margin:0 0 6px;font-size:1.25rem;color:#f5b800}
 a.card p{margin:0 0 4px;font-size:.9rem;color:#c9ccd0}
 a.card b{display:inline-block;margin-top:8px;background:#f5b800;color:#1b1d20;padding:10px 18px;border-radius:8px}
 .note{margin-top:18px;font-size:.78rem;color:#9aa0a6;text-align:center;max-width:36ch}
-
 #notice{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:20px;z-index:99}
 #notice .box{background:#1c2024;border:2px solid #f5b800;border-radius:14px;padding:22px;max-width:380px;width:100%;text-align:center}
 #notice h2{margin:0 0 10px;color:#f5b800;font-size:1.25rem}
 #notice p{margin:0 0 10px;font-size:.92rem;line-height:1.45;color:#e6e3da}
-#notice button{font:inherit;font-weight:700;background:#f5b800;color:#1b1d20;border:0;border-radius:8px;padding:12px 26px;margin-top:6px;cursor:pointer}
 </style></head><body>
 <h1>World Tournament</h1><p class="sub">Choose a game to play</p>
-<div class="cards">
+<div id="auth" class="panel" style="display:none">
+  <h2>Log in or create an account</h2>
+  <input id="u" placeholder="Username (3-12 letters, numbers, _)" maxlength="12" autocomplete="username">
+  <input id="p" type="password" placeholder="Password (6 or more characters)" maxlength="64" autocomplete="current-password">
+  <div class="row"><button id="li">Log in</button><button id="su" class="alt">Create account</button></div>
+  <div id="am"></div>
+  <div class="tiny">New accounts get ₦5,000 of play money.</div>
+</div>
+<div id="acct" class="panel" style="display:none">
+  <div class="who"><b id="nm"></b><span>Balance: <b id="bal"></b> <small>(play money)</small></span></div>
+  <div class="row"><button id="hb" class="alt">History</button><button id="lo" class="alt">Log out</button></div>
+  <div id="hist"></div>
+</div>
+<div class="cards" id="cards" style="display:none">
 <a class="card" href="/race"><h2>Racing game</h2><p>Same track, same speed. Skill decides.</p><p>1 vs 1, 5-player and 2 vs 2 team tournaments.</p><p>Tournaments from ₦100 · Prize 1.8x</p><b>Play racing game</b></a>
 <a class="card" href="/shoot"><h2>Shooting game</h2><p>Armored tanks, 3 maps, best of 3 rounds.</p><p>1 vs 1, 5-player and 2 vs 2 team tournaments, with voice chat.</p><p>Tournament ₦500 · Prize ₦900. 5-player ₦1,000 · Prize up to ₦2,200.</p><b>Play shooting game</b></a>
 </div>
-<p class="note">Play money only. No payments in this version.</p>
+<p class="note" id="note2">Play money only. No payments in this version.</p>
 <div id="notice"><div class="box"><h2>Important notice</h2>
 <p>World Tournament is a skill-based gaming experience. Results are decided by player skill, not by luck or chance.</p>
 <p>It is not a lottery, betting or gambling game. This version uses play money only.</p>
 <p>You must be 18 or older to play.</p>
 <button id="nok">I understand</button></div></div>
 <script>
+const $=id=>document.getElementById(id);
+const naira=v=>'₦'+Number(v).toLocaleString('en-US');
+let tok='';try{tok=localStorage.getItem('wt_token')||''}catch(e){}
+function save(t){tok=t;try{t?localStorage.setItem('wt_token',t):localStorage.removeItem('wt_token')}catch(e){}}
+async function api(path,method,body){
+  const h={'Content-Type':'application/json'};if(tok)h.Authorization='Bearer '+tok;
+  const r=await fetch(path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):undefined});
+  let d={};try{d=await r.json()}catch(e){}
+  if(!r.ok)throw new Error(d.error||'Something went wrong');
+  return d;
+}
+function view(m){$('auth').style.display=m==='auth'?'':'none';$('acct').style.display=m==='in'?'':'none';$('cards').style.display=(m==='in'||m==='guest')?'':'none'}
+function showUser(d){$('nm').textContent=d.name;$('bal').textContent=naira(d.balance);view('in')}
+async function start(){
+  try{
+    const s=await api('/api/status');
+    if(!s.db){$('note2').textContent='Accounts are offline on this server. You are playing as a guest. Play money only.';view('guest');return}
+    if(tok){try{showUser(await api('/api/me'));return}catch(e){save('')}}
+    view('auth');
+  }catch(e){view('guest')}
+}
+async function go(kind){
+  $('am').textContent='';
+  try{const d=await api('/api/'+kind,'POST',{username:$('u').value,password:$('p').value});save(d.token);$('p').value='';showUser(d)}
+  catch(e){$('am').textContent=e.message}
+}
+$('li').onclick=()=>go('login');
+$('su').onclick=()=>go('register');
+$('lo').onclick=async()=>{try{await api('/api/logout','POST')}catch(e){}save('');$('hist').textContent='';view('auth')};
+$('hb').onclick=async()=>{
+  const box=$('hist');
+  if(box.childNodes.length){box.textContent='';return}
+  try{
+    const d=await api('/api/ledger');
+    d.rows.forEach(x=>{const r=document.createElement('div');r.textContent=x.reason+': '+(x.delta>0?'+':'')+naira(x.delta)+' (balance '+naira(x.bal)+')';box.appendChild(r)});
+  }catch(e){box.textContent=e.message}
+};
 (function(){var k='wt_notice',seen='';try{seen=sessionStorage.getItem(k)}catch(e){}
-var el=document.getElementById('notice');if(seen){el.style.display='none';return}
-document.getElementById('nok').onclick=function(){try{sessionStorage.setItem(k,'1')}catch(e){}el.style.display='none'}})();
-</script>
-</body></html>
+var el=$('notice');if(seen){el.style.display='none'}
+$('nok').onclick=function(){try{sessionStorage.setItem(k,'1')}catch(e){}el.style.display='none'}})();
+start();
+</script></body></html>
